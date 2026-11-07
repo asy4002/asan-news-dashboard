@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>아산시 홍보 사업 성과 분석 시스템</title>
+<meta name="description" content="아산시 관련 온라인 뉴스 보도를 매일 수집·분석하여 홍보 사업 성과를 데이터로 보여주는 공개 대시보드">
+<meta property="og:type" content="website">
+<meta property="og:title" content="아산시 홍보 사업 성과 분석 시스템">
+<meta property="og:description" content="아산시 관련 뉴스 보도량·확산·매체·주제를 매일 자동 분석하는 공개 대시보드">
+<meta property="og:url" content="%%ORIGIN%%/">
+<meta property="og:image" content="%%ORIGIN%%/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="아산시 홍보 사업 성과 분석 시스템">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="아산시 홍보 사업 성과 분석 시스템">
+<meta name="twitter:description" content="아산시 관련 뉴스 보도량·확산·매체·주제를 매일 자동 분석하는 공개 대시보드">
+<meta name="twitter:image" content="%%ORIGIN%%/assets/og-image.png">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/common.css">
+<script>(function(){var t=localStorage.getItem('theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;})();</script>
+<style>
+.filter{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.filter .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-top:10px;padding-bottom:10px}
+.filter .grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.filter .lbl{font-size:13px;color:var(--muted);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi .k{font-size:13px;color:var(--muted)}
+.kpi .v{font-size:26px;font-weight:800;margin:2px 0;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px}
+.up{color:var(--pos)}.down{color:var(--neg)}.flat{color:var(--muted)}
+.ind{border:1px solid var(--line);border-radius:10px;padding:12px}
+.ind .k{font-size:13px;color:var(--muted)}.ind .v{font-size:20px;font-weight:700}
+.ind .x{font-size:12px;color:var(--muted)}
+.summary-text{font-size:15px;background:var(--soft);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+tr.issue{cursor:pointer}tr.issue:hover td{background:var(--soft)}
+tr.detail td{background:var(--soft);font-size:13px}
+tr.detail ul{margin:4px 0;padding-left:18px}
+th.sort{cursor:pointer}th.sort::after{content:" ↕";color:var(--muted);font-size:11px}
+.pager{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:10px}
+.stat4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0}
+@media(max-width:700px){.stat4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat4 div{background:var(--soft);border-radius:8px;padding:10px}.stat4 b{font-size:18px;display:block}
+.admin-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.admin-badge{background:var(--orange);color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal .card{width:min(360px,92vw)}
+.modal label{display:block;font-size:13px;margin:10px 0 4px}
+.modal input{width:100%}
+.err{color:var(--neg);font-size:13px;min-height:18px;margin-top:6px}
+.progress{font-size:13px;color:var(--orange);font-weight:600}
+dl.defs{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:14px;margin:0}
+dl.defs dt{font-weight:700}dl.defs dd{margin:0;color:var(--muted)}
+@media(max-width:600px){dl.defs{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="powered">Powered By <b>YILOWOON</b></div>
+<div id="sampleBanner" class="sample-banner" hidden>⚠ 샘플 데이터입니다 — 실제 보도 자료가 아닙니다. API 키를 입력하고 수집하면 실제 데이터로 바뀝니다.</div>
+
+<header class="top">
+  <div class="wrap">
+    <img class="logo" src="assets/logo.svg" alt="아산시 로고(상징)">
+    <div class="grow">
+      <h1 id="title">아산시 홍보 사업 성과 분석 시스템</h1>
+      <div class="sub" id="periodInfo">데이터를 불러오는 중…</div>
+      <div class="sub">본 시스템은 매일 <span id="refreshText">오전 8시</span>(한국시간) 자동 갱신됩니다.</div>
+    </div>
+    <div id="adminArea" class="admin-bar" hidden>
+      <span class="admin-badge">관리자 모드</span>
+      <button class="btn primary" id="refreshBtn">최신 데이터로 갱신</button>
+      <span class="progress" id="refreshMsg"></span>
+      <button class="btn" id="logoutBtn">로그아웃</button>
+    </div>
+    <button class="btn" id="themeBtn" aria-label="화면 모드 전환">🌓 화면 모드</button>
+  </div>
+</header>
+
+<div class="filter">
+  <div class="wrap">
+    <div class="grp"><span class="lbl">기간</span>
+      <button class="btn preset" data-p="7">7일</button>
+      <button class="btn preset" data-p="30">30일</button>
+      <button class="btn preset" data-p="month">이번 달</button>
+      <button class="btn preset" data-p="90">3개월</button>
+      <button class="btn preset" data-p="all">전체</button>
+      <input type="date" id="dFrom" aria-label="시작일"> ~ <input type="date" id="dTo" aria-label="종료일">
+    </div>
+    <div class="grp"><span class="lbl">집계</span>
+      <select id="unit"><option value="day">일</option><option value="week" selected>주</option><option value="month">월</option></select>
+    </div>
+    <div class="grp"><span class="lbl">주제</span><select id="topic"><option value="">전체</option></select></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section>
+    <div class="kpis" id="kpis"></div>
+    <div class="small muted" style="margin-top:6px" id="kpiNote"></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card"><h3>보도 추이</h3><div class="chart-box"><canvas id="cTrend"></canvas></div></div>
+    <div class="card"><h3>확인 조회수 추이</h3><div class="chart-box"><canvas id="cViews"></canvas></div>
+      <div class="small muted">조회수는 공개·검증된 일부 매체에서만 확인된 값의 합계입니다.</div></div>
+  </section>
+  <section class="grid2">
+    <div class="card"><h3>주제별 분포</h3><div class="chart-box"><canvas id="cTopic"></canvas></div></div>
+    <div class="card"><h3>매체별 보도 TOP 15</h3><div class="chart-box tall"><canvas id="cPress"></canvas></div></div>
+  </section>
+  <section class="grid2">
+    <div class="card"><h3>매체별 확인 조회수 TOP 15</h3><div class="chart-box tall"><canvas id="cPressViews"></canvas></div></div>
+    <div class="card"><h2>홍보 성과 요약</h2>
+      <div class="summary-text" id="sumText"></div>
+      <div class="grid3" id="indicators"></div>
+    </div>
+  </section>
+
+  <section class="card" id="statSection">
+    <h2>통계 분석 요약</h2>
+    <div id="statHead" class="summary-text"></div>
+    <div class="stat4" id="stat4"></div>
+    <div id="statFindings"></div>
+    <div style="margin-top:12px"><a class="btn primary" href="report.html">성과 보고내용 보기 →</a>
+      <span class="small muted" id="statMeta"></span></div>
+  </section>
+
+  <section class="card">
+    <h2>기간별 성과표</h2>
+    <div class="tools"><button class="btn" id="csvPeriod">CSV 내려받기</button></div>
+    <div class="table-wrap"><table id="tPeriod"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>주요 이슈</h2>
+    <div class="tools">
+      <input type="search" id="qIssue" placeholder="이슈 제목 검색" style="min-width:220px">
+      <button class="btn" id="csvIssue">CSV 내려받기</button>
+      <span class="small muted">행을 누르면 해당 이슈의 기사 목록이 펼쳐집니다.</span>
+    </div>
+    <div class="table-wrap"><table id="tIssue"></table></div>
+    <div class="pager" id="pIssue"></div>
+  </section>
+
+  <section class="card">
+    <h2>기사 목록</h2>
+    <div class="tools">
+      <input type="search" id="qArt" placeholder="제목·매체 검색" style="min-width:220px">
+      <button class="btn" id="csvArt">CSV 내려받기</button>
+    </div>
+    <div class="table-wrap"><table id="tArt"></table></div>
+    <div class="pager" id="pArt"></div>
+  </section>
+
+  <section class="card">
+    <h2>지표 정의 및 데이터 한계</h2>
+    <dl class="defs">
+      <dt>보도 건수</dt><dd>선택 기간에 수집된 아산시 관련 기사 수(서로 다른 URL 기준)</dd>
+      <dt>통합 이슈</dt><dd>제목 유사도(문자 2-gram 자카드 ≥ 0.45, 3일 이내)로 같은 보도자료에서 나온 기사를 하나로 묶은 단위</dd>
+      <dt>보도 매체</dt><dd>기사를 낸 서로 다른 언론사 수</dd>
+      <dt>확인 조회수</dt><dd>원문 페이지에서 조회수를 공개하고 검증된 매체의 조회수 합계. 공개율 = 조회수 확인 기사 ÷ 전체 기사</dd>
+      <dt>대형 확산 이슈</dt><dd>5개 이상 매체가 보도한 이슈</dd>
+      <dt>노출</dt><dd>보도 건수</dd>
+      <dt>확산</dt><dd>이슈당 평균 보도 매체 수</dd>
+      <dt>도달</dt><dd>확인 조회수 합계(일부 매체 표본)</dd>
+      <dt>지속</dt><dd>이슈별 첫 보도~마지막 보도 기간의 평균(일)</dd>
+      <dt>매체 다양성</dt><dd>유효 매체 수 = 1 ÷ Σ(매체별 점유율²). 클수록 여러 매체에 고르게 보도됨</dd>
+      <dt>이슈 집중도</dt><dd>상위 10% 이슈가 전체 보도에서 차지하는 비중</dd>
+    </dl>
+    <div class="note" style="margin-top:14px">
+      <b>데이터 한계</b><br>
+      · 수집 편향: 네이버 뉴스 검색(검색어당 최대 1,000건)과 선택적 뉴스토어 수집에 의존하므로 모든 보도를 포괄하지 못합니다.<br>
+      · 조회수 공개율: 조회수는 일부 매체만 공개하므로 실제 도달 규모보다 작게 나타납니다.<br>
+      · 상관≠인과: 지표 간 상관은 함께 움직였다는 뜻일 뿐, 홍보 활동이 원인이라는 증거가 아닙니다.<br>
+      · 주제 분류는 키워드 기반 자동 분류로 오분류가 있을 수 있습니다.
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div><b id="operator">사단법인 도시공동체본부</b></div>
+  <div>Powered By YILOWOON</div>
+</footer>
+
+<div class="modal" id="loginModal" hidden>
+  <form class="card" id="loginForm" autocomplete="on">
+    <h2>관리자 로그인</h2>
+    <label for="lid">아이디</label><input id="lid" name="username" autocomplete="username" required>
+    <label for="lpw">비밀번호</label><input id="lpw" name="password" type="password" autocomplete="current-password" required>
+    <div class="err" id="loginErr"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <a class="btn" href="/">공개 화면</a><button class="btn primary" type="submit">로그인</button>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function(){
+'use strict';
+var D = window.ASAN_DATA, R = window.ASAN_REPORT || {};
+if(!D){document.getElementById('periodInfo').textContent='데이터 파일(data.js)이 없습니다. python run.py sample 또는 python run.py daily 를 먼저 실행하세요.';return;}
+var M = D.meta, BIG = M.big_issue_press || 5;
+var $ = function(id){return document.getElementById(id);};
+var fmt = function(n,d){if(n==null||isNaN(n))return '-';return Number(n).toLocaleString('ko-KR',{maximumFractionDigits:d==null?0:d,minimumFractionDigits:d||0});};
+var esc = function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+
+// ── 메타 ──
+document.title = M.system; $('title').textContent = M.system; $('operator').textContent = M.operator;
+$('refreshText').textContent = M.refresh_text;
+$('periodInfo').textContent = '데이터 기간 ' + (M.first_date||'-') + ' ~ ' + (M.last_date||'-') + ' · 갱신 ' + M.generated + ' · 기사 ' + fmt(M.articles) + '건';
+if(M.sample) $('sampleBanner').hidden = false;
+D.topics.forEach(function(t,i){var o=document.createElement('option');o.value=i;o.textContent=t;$('topic').appendChild(o);});
+
+// ── 날짜 유틸 ──
+function pd(s){var a=s.split('-');return new Date(+a[0],+a[1]-1,+a[2]);}
+function ds(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function addDays(s,n){var d=pd(s);d.setDate(d.getDate()+n);return ds(d);}
+function daysBetween(a,b){return Math.round((pd(b)-pd(a))/86400000);}
+function weekKey(s){var d=pd(s);var w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return ds(d);}
+function bucket(s,u){return u==='day'?s:u==='week'?weekKey(s):s.slice(0,7);}
+function bucketLabel(k,u){if(u==='week')return k.slice(5).replace('-','/')+' 주';if(u==='month')return k.replace('-','년 ')+'월';return k.slice(5).replace('-','/');}
+
+// ── 상태 ──
+var A = D.articles; // [id,date,cluster,pressIdx,title,url,views,topicIdx]
+var minD = M.first_date || M.start, maxD = M.last_date || M.start;
+var S = {from:minD,to:maxD,unit:'week',topic:'',preset:'all'};
+
+function setPreset(p){
+  S.preset=p; S.to=maxD;
+  if(p==='all')S.from=minD;
+  else if(p==='month')S.from=maxD.slice(0,8)+'01';
+  else S.from=addDays(maxD,-(+p-1));
+  if(S.from<minD)S.from=minD;
+  if(p==='7'||p==='30')S.unit='day'; else if(p==='90'||p==='month')S.unit=p==='month'?'day':'week'; else S.unit='week';
+  $('unit').value=S.unit; syncInputs(); render();
+}
+function syncInputs(){
+  $('dFrom').value=S.from;$('dTo').value=S.to;$('dFrom').min=$('dTo').min=minD;$('dFrom').max=$('dTo').max=maxD;
+  document.querySelectorAll('.preset').forEach(function(b){b.classList.toggle('active',b.dataset.p===S.preset);});
+}
+function filt(from,to){
+  var t=S.topic===''?-1:+S.topic;
+  return A.filter(function(a){return a[1]>=from&&a[1]<=to&&(t<0||a[7]===t);});
+}
+
+// ── 집계 ──
+function agg(arr){
+  var cl={},pr={},vs=0,vc=0;
+  arr.forEach(function(a){
+    var c=cl[a[2]]||(cl[a[2]]={n:0,press:{},first:a[1],last:a[1],views:0,topic:a[7]});
+    c.n++;c.press[a[3]]=1;if(a[1]<c.first)c.first=a[1];if(a[1]>c.last)c.last=a[1];
+    pr[a[3]]=(pr[a[3]]||0)+1;
+    if(a[6]!=null){vs+=a[6];vc++;c.views+=a[6];}
+  });
+  var ids=Object.keys(cl),big=0,spread=0,dur=0;
+  ids.forEach(function(k){var c=cl[k];c.pc=Object.keys(c.press).length;if(c.pc>=BIG)big++;spread+=c.pc;dur+=daysBetween(c.first,c.last)+1;});
+  var n=arr.length,hhi=0;Object.keys(pr).forEach(function(p){var s=pr[p]/n;hhi+=s*s;});
+  var sizes=ids.map(function(k){return cl[k].n;}).sort(function(a,b){return b-a;});
+  var top=Math.max(1,Math.ceil(sizes.length*0.1)),topSum=0;for(var i=0;i<top&&i<sizes.length;i++)topSum+=sizes[i];
+  return {n:n,issues:ids.length,press:Object.keys(pr).length,views:vs,vcnt:vc,vrate:n?vc/n:0,
+    perIssue:ids.length?n/ids.length:0,big:big,spread:ids.length?spread/ids.length:0,
+    dur:ids.length?dur/ids.length:0,eff:hhi?1/hhi:0,conc:n?topSum/n:0,cl:cl,pr:pr};
+}
+function delta(cur,prev,pct){
+  if(prev==null||prev===0||isNaN(prev))return '<span class="flat">직전 동기간 비교 불가</span>';
+  var d=(cur-prev)/prev*100,cls=d>0.5?'up':d<-0.5?'down':'flat',ar=d>0.5?'▲':d<-0.5?'▼':'–';
+  return '<span class="'+cls+'">'+ar+' '+fmt(Math.abs(d),1)+'%</span> <span class="muted">직전 동기간 대비</span>';
+}
+
+// ── 차트 ──
+var charts={};
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function chart(id,cfg){
+  if(charts[id])charts[id].destroy();
+  var tx=css('--muted'),gr=css('--grid');
+  Chart.defaults.color=tx;Chart.defaults.font.family='"Noto Sans KR","Malgun Gothic",sans-serif';
+  cfg.options=Object.assign({responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}}},cfg.options||{});
+  var sc=cfg.options.scales;if(sc)Object.keys(sc).forEach(function(k){sc[k].grid=Object.assign({color:gr},sc[k].grid||{});sc[k].ticks=Object.assign({color:tx},sc[k].ticks||{});});
+  charts[id]=new Chart($(id),cfg);
+}
+var TOPIC_COLORS=['#1d4f9c','#e8891a','#2f8a3b','#8e44ad','#c0392b','#16a085','#7f8c8d','#d35400','#2980b9','#95a5a6'];
+
+function series(arr,from,to,unit){
+  var keys=[],seen={},d=from;
+  while(d<=to){var k=bucket(d,unit);if(!seen[k]){seen[k]=1;keys.push(k);}d=addDays(d,1);}
+  var cnt={},vw={};keys.forEach(function(k){cnt[k]=0;vw[k]=0;});
+  arr.forEach(function(a){var k=bucket(a[1],unit);if(k in cnt){cnt[k]++;if(a[6]!=null)vw[k]+=a[6];}});
+  return {keys:keys,cnt:keys.map(function(k){return cnt[k];}),views:keys.map(function(k){return vw[k];})};
+}
+
+// ── 렌더 ──
+var cur=[],curAgg=null;
+function render(){
+  if(S.from>S.to){var t=S.from;S.from=S.to;S.to=t;syncInputs();}
+  cur=filt(S.from,S.to); var g=curAgg=agg(cur);
+  var len=daysBetween(S.from,S.to)+1, pTo=addDays(S.from,-1), pFrom=addDays(S.from,-len);
+  var prev=pFrom>=minD?agg(filt(pFrom,pTo)):null;
+  var K=[
+    ['보도 건수',fmt(g.n)+'건',g.n,prev&&prev.n],
+    ['통합 이슈',fmt(g.issues)+'개',g.issues,prev&&prev.issues],
+    ['보도 매체',fmt(g.press)+'곳',g.press,prev&&prev.press],
+    ['확인 조회수',fmt(g.views)+'<span class="small muted"> (공개율 '+fmt(g.vrate*100,1)+'%)</span>',g.views,prev&&prev.views],
+    ['이슈당 평균 보도',fmt(g.perIssue,2)+'건',g.perIssue,prev&&prev.perIssue],
+    ['대형 확산 이슈',fmt(g.big)+'개',g.big,prev&&prev.big]
+  ];
+  $('kpis').innerHTML=K.map(function(k){return '<div class="card kpi"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="d">'+delta(k[2],k[3])+'</div></div>';}).join('');
+  $('kpiNote').textContent='선택 기간 '+S.from+' ~ '+S.to+' ('+len+'일)'+(prev?' · 비교 기간 '+pFrom+' ~ '+pTo:' · 직전 동기간 데이터 없음')+' · 대형 확산 이슈 = '+BIG+'개 매체 이상 보도';
+
+  var se=series(cur,S.from,S.to,S.unit), labels=se.keys.map(function(k){return bucketLabel(k,S.unit);});
+  var blue=css('--blue'),orange=css('--orange'),green=css('--green');
+  chart('cTrend',{type:'bar',data:{labels:labels,datasets:[{label:'보도 건수',data:se.cnt,backgroundColor:blue,borderRadius:3}]},
+    options:{scales:{x:{ticks:{maxRotation:0,autoSkip:true}},y:{beginAtZero:true,title:{display:true,text:'건'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' 보도 '+fmt(c.raw)+'건';}}}}}});
+  chart('cViews',{type:'bar',data:{labels:labels,datasets:[{label:'확인 조회수',data:se.views,backgroundColor:orange,borderRadius:3}]},
+    options:{scales:{x:{ticks:{maxRotation:0,autoSkip:true}},y:{beginAtZero:true,title:{display:true,text:'회'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' 조회수 '+fmt(c.raw)+'회';}}}}}});
+  var tc=D.topics.map(function(){return 0;});cur.forEach(function(a){tc[a[7]]++;});
+  var tord=D.topics.map(function(t,i){return i;}).filter(function(i){return tc[i]>0;}).sort(function(a,b){return tc[b]-tc[a];});
+  chart('cTopic',{type:'bar',data:{labels:tord.map(function(i){return D.topics[i];}),datasets:[{data:tord.map(function(i){return tc[i];}),backgroundColor:tord.map(function(i){return TOPIC_COLORS[i%10];}),borderRadius:3}]},
+    options:{indexAxis:'y',scales:{x:{beginAtZero:true},y:{}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+fmt(c.raw)+'건 ('+fmt(c.raw/cur.length*100,1)+'%)';}}}}}});
+  var pr=Object.keys(g.pr).sort(function(a,b){return g.pr[b]-g.pr[a];}).slice(0,15);
+  chart('cPress',{type:'bar',data:{labels:pr.map(function(p){return D.press[p];}),datasets:[{data:pr.map(function(p){return g.pr[p];}),backgroundColor:blue,borderRadius:3}]},
+    options:{indexAxis:'y',scales:{x:{beginAtZero:true},y:{ticks:{autoSkip:false}}}}});
+  var pv={};cur.forEach(function(a){if(a[6]!=null)pv[a[3]]=(pv[a[3]]||0)+a[6];});
+  var pvk=Object.keys(pv).sort(function(a,b){return pv[b]-pv[a];}).slice(0,15);
+  chart('cPressViews',{type:'bar',data:{labels:pvk.map(function(p){return D.press[p];}),datasets:[{data:pvk.map(function(p){return pv[p];}),backgroundColor:green,borderRadius:3}]},
+    options:{indexAxis:'y',scales:{x:{beginAtZero:true},y:{ticks:{autoSkip:false}}}}});
+
+  renderSummary(g,prev,tord,tc,pr);
+  renderPeriod();
+  issuePage=0;renderIssues();artPage=0;renderArticles();
+}
+
+function renderSummary(g,prev,tord,tc,pr){
+  if(!g.n){$('sumText').textContent='선택한 조건에 해당하는 보도가 없습니다.';$('indicators').innerHTML='';return;}
+  var topT=tord.length?D.topics[tord[0]]:'-', topP=pr.length?D.press[pr[0]]:'-';
+  var chg=prev&&prev.n?((g.n-prev.n)/prev.n*100):null;
+  var s=S.from+' ~ '+S.to+' 기간 '+M.region+' 관련 보도는 총 <b>'+fmt(g.n)+'건</b>(통합 이슈 '+fmt(g.issues)+'개, '+fmt(g.press)+'개 매체)으로 ';
+  s+=chg==null?'집계됨. ':'직전 동기간 대비 <b>'+(chg>=0?fmt(chg,1)+'% 증가':fmt(-chg,1)+'% 감소')+'</b>함. ';
+  s+='가장 많이 보도된 주제는 <b>'+esc(topT)+'</b>('+fmt(tc[tord[0]]/g.n*100,1)+'%)이며, 최다 보도 매체는 '+esc(topP)+'임. ';
+  s+='5개 이상 매체가 보도한 대형 확산 이슈는 '+fmt(g.big)+'개임.';
+  $('sumText').innerHTML=s;
+  var I=[
+    ['노출','보도 건수',fmt(g.n)+'건',prev&&prev.n,g.n],
+    ['확산','이슈당 평균 매체 수',fmt(g.spread,2)+'곳',prev&&prev.spread,g.spread],
+    ['도달','확인 조회수 합계',fmt(g.views)+'회',prev&&prev.views,g.views],
+    ['지속','이슈 평균 보도 기간',fmt(g.dur,2)+'일',prev&&prev.dur,g.dur],
+    ['매체 다양성','유효 매체 수',fmt(g.eff,1)+'곳',prev&&prev.eff,g.eff],
+    ['이슈 집중도','상위 10% 이슈 보도 비중',fmt(g.conc*100,1)+'%',prev&&prev.conc,g.conc]
+  ];
+  $('indicators').innerHTML=I.map(function(i){return '<div class="ind"><div class="k">'+i[0]+'</div><div class="v">'+i[2]+'</div><div class="x">'+i[1]+'</div><div class="d small">'+delta(i[4],i[3])+'</div></div>';}).join('');
+}
+
+// ── 통계 분석 요약 (ASAN_REPORT) ──
+function pfmt(p){if(p==null)return '-';return p<0.001?'p<0.001':'p='+(+p).toFixed(3);}
+function stars(p){return p==null?'':p<0.001?'***':p<0.01?'**':p<0.05?'*':'';}
+function renderStat(){
+  var st=R.stats, ai=R.ai;
+  if(!st){$('statSection').hidden=true;return;}
+  $('statHead').innerHTML=ai&&ai.headline?'<b>AI 요약</b> · '+esc(ai.headline):'AI 해석이 아직 없습니다(통계 수치만 표시). GEMINI_API_KEY 를 설정하고 <code>python run.py report</code> 를 실행하면 해석이 추가됩니다.';
+  var tr=st.trend||{}, tc=(st.summary||{}).top_corr, wd=st.weekday||{};
+  $('stat4').innerHTML=[
+    ['주간 평균 보도',fmt((st.descriptive.weekly||{}).mean,1)+'건',st.weeks_n+'주 기준'],
+    ['주간 추세',tr.available?(tr.pct_per_week>=0?'+':'')+fmt(tr.pct_per_week,2)+'%/주':'-',tr.available?pfmt(tr.p)+' '+stars(tr.p):'표본 부족'],
+    ['보도량과 가장 강한 상관',tc?esc(tc.label):'-',tc?'r='+fmt(tc.r,2)+' · Holm '+pfmt(tc.p_holm):''],
+    ['평일÷주말 보도',wd.weekend_mean?fmt(wd.weekday_mean/wd.weekend_mean,2)+'배':'-',wd.p!=null?'Mann-Whitney '+pfmt(wd.p):'']
+  ].map(function(x){return '<div><span class="small muted">'+x[0]+'</span><b>'+x[1]+'</b><span class="small muted">'+x[2]+'</span></div>';}).join('');
+  var f=ai&&ai.key_findings?ai.key_findings.slice(0,3):[];
+  $('statFindings').innerHTML=f.length?'<div class="ai-box"><div class="lbl">AI 해석 · 주요 발견</div><ul style="margin:4px 0;padding-left:18px">'+f.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>':'';
+  $('statMeta').textContent=' 통계 산출 '+(R.generated||'-')+(R.ai_generated?' · AI 해석 '+R.ai_generated+(R.ai_status==='reused'?'(직전 해석 재사용)':''):'')+' · 통계는 전체 기간 기준(필터 미적용)';
+}
+
+// ── 기간별 성과표 ──
+var periodRows=[];
+function renderPeriod(){
+  var groups={};cur.forEach(function(a){var k=bucket(a[1],S.unit);(groups[k]=groups[k]||[]).push(a);});
+  var keys=Object.keys(groups).sort().reverse();
+  periodRows=keys.map(function(k){var g=agg(groups[k]);return [bucketLabel(k,S.unit),g.n,g.issues,g.press,g.big,g.perIssue,g.views,g.vrate];});
+  var h='<thead><tr><th>기간</th><th class="num">보도 건수</th><th class="num">통합 이슈</th><th class="num">보도 매체</th><th class="num">대형 확산</th><th class="num">이슈당 보도</th><th class="num">확인 조회수</th><th class="num">조회수 공개율</th></tr></thead><tbody>';
+  h+=periodRows.slice(0,60).map(function(r){return '<tr><td>'+r[0]+'</td><td class="num">'+fmt(r[1])+'</td><td class="num">'+fmt(r[2])+'</td><td class="num">'+fmt(r[3])+'</td><td class="num">'+fmt(r[4])+'</td><td class="num">'+fmt(r[5],2)+'</td><td class="num">'+fmt(r[6])+'</td><td class="num">'+fmt(r[7]*100,1)+'%</td></tr>';}).join('');
+  if(!periodRows.length)h+='<tr><td colspan="8" class="muted">데이터 없음</td></tr>';
+  $('tPeriod').innerHTML=h+'</tbody>'+(periodRows.length>60?'<caption class="small muted" style="caption-side:bottom">최근 60개 구간만 표시 · 전체는 CSV</caption>':'');
+}
+
+// ── 주요 이슈 ──
+var issueSort={k:'n',dir:-1},issuePage=0,openIssue=null,issueRows=[];
+var IPS=20;
+function renderIssues(){
+  var q=$('qIssue').value.trim().toLowerCase(),cl=curAgg.cl;
+  issueRows=Object.keys(cl).map(function(k){var c=cl[k];return {id:k,title:D.clusters[k]||'',first:c.first,last:c.last,n:c.n,pc:c.pc,views:c.views,topic:D.topics[c.topic]};})
+    .filter(function(r){return !q||r.title.toLowerCase().indexOf(q)>=0;});
+  var k=issueSort.k,d=issueSort.dir;
+  issueRows.sort(function(a,b){return (a[k]>b[k]?1:a[k]<b[k]?-1:0)*d||b.n-a.n;});
+  var pages=Math.max(1,Math.ceil(issueRows.length/IPS));if(issuePage>=pages)issuePage=pages-1;
+  var cols=[['title','이슈(대표 제목)'],['topic','주제'],['first','첫 보도'],['n','보도 건수',1],['pc','보도 매체',1],['views','확인 조회수',1]];
+  var h='<thead><tr>'+cols.map(function(c){return '<th class="sort'+(c[2]?' num':'')+'" data-k="'+c[0]+'">'+c[1]+'</th>';}).join('')+'</tr></thead><tbody>';
+  issueRows.slice(issuePage*IPS,(issuePage+1)*IPS).forEach(function(r){
+    h+='<tr class="issue" data-id="'+r.id+'"><td>'+esc(r.title)+(r.pc>=BIG?' <span class="badge warn">대형 확산</span>':'')+'</td><td><span class="badge">'+esc(r.topic)+'</span></td><td>'+r.first+(r.last!==r.first?' ~ '+r.last.slice(5):'')+'</td><td class="num">'+fmt(r.n)+'</td><td class="num">'+fmt(r.pc)+'</td><td class="num">'+fmt(r.views)+'</td></tr>';
+    if(openIssue===r.id){
+      var list=cur.filter(function(a){return String(a[2])===r.id;}).sort(function(a,b){return a[1]<b[1]?-1:1;});
+      h+='<tr class="detail"><td colspan="6"><ul>'+list.map(function(a){return '<li>'+a[1]+' · '+esc(D.press[a[3]])+' · '+link(a)+(a[6]!=null?' · 조회 '+fmt(a[6]):'')+'</li>';}).join('')+'</ul></td></tr>';
+    }
+  });
+  if(!issueRows.length)h+='<tr><td colspan="6" class="muted">데이터 없음</td></tr>';
+  $('tIssue').innerHTML=h+'</tbody>';
+  pager('pIssue',issuePage,pages,function(p){issuePage=p;renderIssues();},issueRows.length+'개 이슈');
+}
+function link(a){var u=a[5];if(!/^https?:\/\//.test(u))return esc(a[4]);return '<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(a[4])+'</a>';}
+$('tIssue').addEventListener('click',function(e){
+  var th=e.target.closest('th.sort');if(th){var k=th.dataset.k;issueSort=issueSort.k===k?{k:k,dir:-issueSort.dir}:{k:k,dir:k==='title'||k==='topic'?1:-1};renderIssues();return;}
+  if(e.target.closest('a'))return;
+  var tr=e.target.closest('tr.issue');if(tr){openIssue=openIssue===tr.dataset.id?null:tr.dataset.id;renderIssues();}
+});
+$('qIssue').addEventListener('input',function(){issuePage=0;renderIssues();});
+
+// ── 기사 목록 ──
+var artPage=0,artRows=[],APS=30;
+function renderArticles(){
+  var q=$('qArt').value.trim().toLowerCase();
+  artRows=cur.filter(function(a){return !q||a[4].toLowerCase().indexOf(q)>=0||D.press[a[3]].toLowerCase().indexOf(q)>=0;})
+    .sort(function(a,b){return a[1]<b[1]?1:a[1]>b[1]?-1:b[0]-a[0];});
+  var pages=Math.max(1,Math.ceil(artRows.length/APS));if(artPage>=pages)artPage=pages-1;
+  var h='<thead><tr><th>날짜</th><th>매체</th><th>제목</th><th>주제</th><th class="num">확인 조회수</th></tr></thead><tbody>';
+  h+=artRows.slice(artPage*APS,(artPage+1)*APS).map(function(a){return '<tr><td style="white-space:nowrap">'+a[1]+'</td><td style="white-space:nowrap">'+esc(D.press[a[3]])+'</td><td>'+link(a)+'</td><td><span class="badge">'+esc(D.topics[a[7]])+'</span></td><td class="num">'+fmt(a[6])+'</td></tr>';}).join('');
+  if(!artRows.length)h+='<tr><td colspan="5" class="muted">데이터 없음</td></tr>';
+  $('tArt').innerHTML=h+'</tbody>';
+  pager('pArt',artPage,pages,function(p){artPage=p;renderArticles();},artRows.length+'건');
+}
+$('qArt').addEventListener('input',function(){artPage=0;renderArticles();});
+function pager(id,p,pages,go,label){
+  var el=$(id);el.innerHTML='';
+  var mk=function(t,np,dis){var b=document.createElement('button');b.className='btn';b.textContent=t;b.disabled=dis;b.onclick=function(){go(np);};el.appendChild(b);};
+  mk('‹ 이전',p-1,p<=0);var s=document.createElement('span');s.className='small muted';s.textContent=(p+1)+' / '+pages+' 쪽 · '+label;el.appendChild(s);mk('다음 ›',p+1,p>=pages-1);
+}
+
+// ── CSV ──
+function csv(name,head,rows){
+  var q=function(v){v=v==null?'':String(v);if(/^[=+\-@]/.test(v))v="'"+v;return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var t='﻿'+[head].concat(rows).map(function(r){return r.map(q).join(',');}).join('\r\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'}));a.download=name+'_'+S.from+'_'+S.to+'.csv';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+}
+$('csvPeriod').onclick=function(){csv('기간별성과',['기간','보도건수','통합이슈','보도매체','대형확산','이슈당보도','확인조회수','조회수공개율'],periodRows.map(function(r){return [r[0],r[1],r[2],r[3],r[4],r[5].toFixed(2),r[6],(r[7]*100).toFixed(1)+'%'];}));};
+$('csvIssue').onclick=function(){csv('주요이슈',['이슈','주제','첫보도','마지막보도','보도건수','보도매체','확인조회수'],issueRows.map(function(r){return [r.title,r.topic,r.first,r.last,r.n,r.pc,r.views];}));};
+$('csvArt').onclick=function(){csv('기사목록',['날짜','매체','제목','주제','URL','확인조회수'],artRows.map(function(a){return [a[1],D.press[a[3]],a[4],D.topics[a[7]],a[5],a[6]];}));};
+
+// ── 이벤트 ──
+document.querySelectorAll('.preset').forEach(function(b){b.onclick=function(){setPreset(b.dataset.p);};});
+$('dFrom').onchange=$('dTo').onchange=function(){S.from=$('dFrom').value||minD;S.to=$('dTo').value||maxD;S.preset='';syncInputs();render();};
+$('unit').onchange=function(){S.unit=this.value;render();};
+$('topic').onchange=function(){S.topic=this.value;render();};
+$('themeBtn').onclick=function(){var t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t);render();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){if(!localStorage.getItem('theme')){document.documentElement.dataset.theme=e.matches?'dark':'light';render();}});
+
+if(typeof Chart==='undefined'){document.querySelectorAll('.chart-box').forEach(function(b){b.innerHTML='<p class="muted small">차트 라이브러리를 불러오지 못했습니다(인터넷 연결 확인).</p>';});window.Chart=function(){return {destroy:function(){}};};window.Chart.defaults={font:{}};}
+syncInputs();render();renderStat();
+
+// ── 관리자 모드 (/admin 에서만) ──
+if(location.pathname.replace(/\/+$/,'')==='/admin')initAdmin();
+function api(path,opt){opt=opt||{};opt.credentials='same-origin';opt.headers=Object.assign({'Content-Type':'application/json'},opt.headers||{});return fetch(path,opt).then(function(r){return r.json().catch(function(){return {};}).then(function(j){j._status=r.status;return j;});});}
+function initAdmin(){
+  api('/api/session').then(function(s){if(s.admin)enterAdmin();else $('loginModal').hidden=false;});
+  $('loginForm').onsubmit=function(e){e.preventDefault();$('loginErr').textContent='';
+    api('/api/login',{method:'POST',body:JSON.stringify({id:$('lid').value,password:$('lpw').value})}).then(function(r){
+      if(r.ok){$('loginModal').hidden=true;$('lpw').value='';enterAdmin();}else $('loginErr').textContent=r.error||'로그인 실패';});};
+  $('logoutBtn').onclick=function(){api('/api/logout',{method:'POST'}).then(function(){location.reload();});};
+  $('refreshBtn').onclick=function(){$('refreshBtn').disabled=true;$('refreshMsg').textContent='요청 중…';
+    api('/api/refresh',{method:'POST'}).then(function(r){if(r.ok){$('refreshMsg').textContent='수집 중…';poll();}else{$('refreshMsg').textContent=r.error||'요청 실패';$('refreshBtn').disabled=!!r.disable;}});};
+}
+var pollT=null;
+function enterAdmin(){
+  $('adminArea').hidden=false;
+  api('/api/refresh-status').then(function(s){
+    if(!s.configured){$('refreshBtn').disabled=true;$('refreshMsg').textContent='GITHUB_TOKEN 미설정 — 갱신 버튼 비활성';return;}
+    if(s.running){$('refreshBtn').disabled=true;$('refreshMsg').textContent='수집 중…';poll();}
+    else $('refreshMsg').textContent=s.last?'최근 실행: '+s.last.status_text:'';
+  });
+}
+function poll(){
+  clearTimeout(pollT);
+  pollT=setTimeout(function(){api('/api/refresh-status').then(function(s){
+    if(s.generated&&s.generated!==M.generated){$('refreshMsg').textContent='새 데이터 반영 — 새로고침합니다';setTimeout(function(){location.reload();},1200);return;}
+    if(s.running)$('refreshMsg').textContent='수집 중… ('+(s.last&&s.last.status_text||'')+')';
+    else if(s.last&&s.last.conclusion==='success')$('refreshMsg').textContent='배포 중… (Render 재배포 대기)';
+    else if(s.last&&s.last.conclusion){$('refreshMsg').textContent='실행 결과: '+s.last.status_text;$('refreshBtn').disabled=false;return;}
+    poll();
+  });},15000);
+}
+})();
+</script>
+</body>
+</html>

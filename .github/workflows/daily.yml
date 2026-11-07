@@ -1,0 +1,80 @@
+name: 매일 데이터 갱신
+
+on:
+  schedule:
+    # cron 은 UTC 기준 (KST = UTC+9). 정각 혼잡을 피해 07:07 / 07:37 / 08:07 KST 3회 시도
+    - cron: "7 22 * * *"
+    - cron: "37 22 * * *"
+    - cron: "7 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TZ: Asia/Seoul
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: 오늘 이미 갱신했는지 확인 (예약 실행만)
+        id: guard
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            SINCE="$(TZ=Asia/Seoul date +%Y-%m-%d)T07:00:00+09:00"
+            N=$(git log --since="$SINCE" --author="github-actions" --format=%H | wc -l)
+            if [ "$N" -gt 0 ]; then
+              echo "오늘 07시(KST) 이후 갱신 커밋이 있어 건너뜀"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 의존성 설치
+        if: steps.guard.outputs.skip != 'true'
+        run: pip install -r requirements.txt
+
+      - name: 수집 · 분석 · AI 해석
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NEWSTORE_API_KEY: ${{ secrets.NEWSTORE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_TEXT_MODEL: ${{ vars.GEMINI_TEXT_MODEL || 'gemini-2.5-flash' }}
+          PYTHONIOENCODING: utf-8
+        run: python run.py daily
+
+      - name: 결과 커밋 · 푸시
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.db dashboard/data.js
+          if git diff --cached --quiet; then
+            echo "변경 없음 - 커밋 생략"
+            exit 0
+          fi
+          git commit -m "데이터 갱신 $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M') KST"
+          for i in 1 2 3; do
+            git pull --rebase -X theirs origin main && git push origin HEAD:main && exit 0
+            echo "푸시 실패 - ${i}회 재시도"
+            sleep $((i * 10))
+          done
+          exit 1

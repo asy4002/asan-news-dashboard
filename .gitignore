@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+data/sample.db
+data/*.log
+data/report.json
+dashboard/data.js.tmp
+node_modules/
+.claude/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+{
+  "name": "asan-news-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "아산시 홍보 사업 성과 분석 시스템 웹서버",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED"
+}

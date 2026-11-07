@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>성과 통계 보고서 · 아산시 홍보 사업 성과 분석 시스템</title>
+<meta property="og:type" content="article">
+<meta property="og:title" content="아산시 홍보 사업 성과 통계 보고서">
+<meta property="og:description" content="아산시 관련 뉴스 보도의 추세·상관·요일·주제 통계 분석과 AI 해석">
+<meta property="og:url" content="%%ORIGIN%%/report.html">
+<meta property="og:image" content="%%ORIGIN%%/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="아산시 홍보 사업 성과 분석 시스템">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="%%ORIGIN%%/assets/og-image.png">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/common.css">
+<script>(function(){var t=localStorage.getItem('theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;})();</script>
+<style>
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+.toc a{font-size:13px;text-decoration:none;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+.heat td{text-align:center;font-variant-numeric:tabular-nums;font-size:13px;min-width:56px}
+.heat th{font-size:12px}
+.chap h2 .no{color:var(--orange)}
+.kv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:800px){.kv{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kv div{background:var(--soft);border-radius:8px;padding:10px}.kv b{display:block;font-size:18px}
+ul.tight{margin:6px 0;padding-left:20px}
+@media print{.powered,.toc,.noprint{display:none}.card{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="powered">Powered By <b>YILOWOON</b></div>
+<div id="sampleBanner" class="sample-banner" hidden>⚠ 샘플 데이터로 만든 보고서입니다 — 실제 분석 결과가 아닙니다.</div>
+<header class="top"><div class="wrap">
+  <img class="logo" src="assets/logo.svg" alt="">
+  <div class="grow"><h1>홍보 사업 성과 통계 보고서</h1><div class="sub" id="meta"></div></div>
+  <a class="btn noprint" href="./">← 대시보드</a>
+  <button class="btn noprint" onclick="window.print()">인쇄</button>
+  <button class="btn noprint" id="themeBtn">🌓 화면 모드</button>
+</div></header>
+
+<main class="wrap">
+  <nav class="toc noprint" id="toc"></nav>
+  <div id="root"></div>
+</main>
+<footer><div><b id="operator">사단법인 도시공동체본부</b></div><div>Powered By YILOWOON</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function(){
+'use strict';
+var D=window.ASAN_DATA||{meta:{}},R=window.ASAN_REPORT||{},S=R.stats,AI=R.ai||null,sec=(AI&&AI.sections)||{};
+var root=document.getElementById('root');
+if(!S){root.innerHTML='<div class="card">통계 결과가 없습니다. <code>python run.py report</code> 를 실행하세요.</div>';return;}
+var M=D.meta;
+document.getElementById('operator').textContent=M.operator||'';
+if(R.sample||M.sample)document.getElementById('sampleBanner').hidden=false;
+document.getElementById('meta').textContent=(M.system||'')+' · 분석 기간 '+S.start+' ~ '+S.generated_for+'(진행 중인 주 제외) · 통계 산출 '+(R.generated||'-')+(R.ai_generated?' · AI 해석 '+R.ai_generated+(R.ai_status==='reused'?'(직전 해석 재사용)':''):' · AI 해석 없음');
+var fmt=function(n,d){if(n==null||isNaN(n))return '-';return Number(n).toLocaleString('ko-KR',{maximumFractionDigits:d==null?2:d});};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+function pf(p){if(p==null)return '-';if(p<0.001)return '<0.001';return (+p).toFixed(3);}
+function star(p){if(p==null)return '';var s=p<0.001?'***':p<0.01?'**':p<0.05?'*':'';return s?' <span class="badge sig">'+s+'</span>':' <span class="badge">n.s.</span>';}
+function aiBox(key){var t=sec[key];return '<div class="ai-box"><div class="lbl">AI 해석</div>'+(t?'<p>'+esc(t).replace(/\n/g,'<br>')+'</p>':'<p class="muted">AI 해석이 없습니다. 위 통계 수치를 기준으로 판단하십시오.</p>')+'</div>';}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+var chaps=[],n=0;
+function chap(id,title,body){n++;chaps.push([id,title]);return '<section class="card chap" id="'+id+'"><h2><span class="no">'+n+'.</span> '+title+'</h2>'+body+'</section>';}
+var h='';
+
+// 1. 분석 요약
+var sum='';
+if(AI){sum+='<div class="summary-text"><b>'+esc(AI.headline)+'</b></div><h3>핵심 발견</h3><ul class="tight">'+(AI.key_findings||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';}
+else sum+='<div class="note">AI 해석이 없습니다(키 미설정 또는 호출 실패). 아래 통계 수치는 모두 결정적으로 계산된 값입니다.</div>';
+var wk=S.descriptive.weekly||{};
+sum+='<div class="kv" style="margin-top:12px"><div>분석 기사<b>'+fmt(S.n_articles,0)+'건</b></div><div>통합 이슈<b>'+fmt(S.n_issues,0)+'개</b></div><div>분석 주 수<b>'+S.weeks_n+'주</b></div><div>조회수 공개율<b>'+fmt(S.views_coverage.rate*100,1)+'%</b></div></div>';
+h+=chap('c-sum','분석 요약',sum);
+
+// 2. 기술통계
+var dsRows=[['주간 보도 건수',S.descriptive.weekly],['일간 보도 건수',S.descriptive.daily],['주간 이슈 수',S.descriptive.weekly_issues],['주간 보도 매체 수',S.descriptive.weekly_press],['이슈당 보도 매체 수',S.descriptive.issue_press]];
+var t='<div class="table-wrap"><table><thead><tr><th>지표</th><th class="num">n</th><th class="num">평균</th><th class="num">표준편차</th><th class="num">중앙값</th><th class="num">최소</th><th class="num">최대</th><th class="num">변동계수</th></tr></thead><tbody>';
+dsRows.forEach(function(r){var d=r[1]||{};t+='<tr><td>'+r[0]+'</td><td class="num">'+fmt(d.n,0)+'</td><td class="num">'+fmt(d.mean)+'</td><td class="num">'+fmt(d.sd)+'</td><td class="num">'+fmt(d.median)+'</td><td class="num">'+fmt(d.min)+'</td><td class="num">'+fmt(d.max)+'</td><td class="num">'+fmt(d.cv)+'</td></tr>';});
+h+=chap('c-desc','기술통계',t+'</tbody></table></div><p class="small muted">진행 중인 마지막 주와 오늘은 제외함. 변동계수 = 표준편차 ÷ 평균.</p>');
+
+// 3. 추세
+var tr=S.trend;
+var tb=tr.available?'<div class="kv"><div>주당 기울기<b>'+fmt(tr.slope)+'건</b></div><div>평균 대비<b>'+(tr.pct_per_week>=0?'+':'')+fmt(tr.pct_per_week)+'%/주</b></div><div>R²<b>'+fmt(tr.r2,3)+'</b></div><div>p<b>'+pf(tr.p)+star(tr.p)+'</b></div></div><p class="small muted">Spearman ρ = '+fmt(tr.rho,3)+' (p '+pf(tr.rho_p)+')</p><div class="chart-box"><canvas id="cTrend"></canvas></div>':'<p class="muted">분석 주 수가 4주 미만이라 추세를 산출하지 않음.</p>';
+h+=chap('c-trend','보도량 추세 (주간 선형회귀)',tb+'<p class="small muted">⚠ 수집 편향: 검색어·수집 범위 변화가 추세에 반영될 수 있음.</p>'+aiBox('trend'));
+
+// 4. 상관
+var C=S.correlation;
+var ct='<div class="table-wrap"><table><thead><tr><th>변수 (↔ '+esc(C.target)+')</th><th class="num">n</th><th class="num">Pearson r</th><th class="num">95% CI</th><th class="num">p</th><th class="num">Holm p</th><th class="num">Spearman ρ</th><th>강도</th></tr></thead><tbody>';
+C.items.forEach(function(c){ct+='<tr><td>'+esc(c.label)+(c.note?'<div class="small muted">※ '+esc(c.note)+'</div>':'')+'</td><td class="num">'+c.n+'</td><td class="num">'+fmt(c.r,3)+'</td><td class="num">'+(c.ci[0]==null?'-':'['+fmt(c.ci[0],2)+', '+fmt(c.ci[1],2)+']')+'</td><td class="num">'+pf(c.p)+'</td><td class="num">'+pf(c.p_holm)+star(c.p_holm)+'</td><td class="num">'+fmt(c.rho,3)+'</td><td>'+esc(c.strength)+'</td></tr>';});
+ct+='</tbody></table></div>';
+if(!C.views_included)ct+='<p class="small muted">조회수가 확인된 주가 5주 미만이라 조회수 상관은 제외함.</p>';
+ct+='<div class="grid2" style="margin-top:14px"><div><h3>산점도 <select id="scSel">'+C.items.map(function(c,i){return '<option value="'+i+'">'+esc(c.label)+'</option>';}).join('')+'</select></h3><div class="chart-box"><canvas id="cScatter"></canvas></div></div><div><h3>주간 지표 상관행렬 (Pearson r)</h3><div class="table-wrap" id="heatCorr"></div></div></div>';
+h+=chap('c-corr','상관 분석',ct+'<p class="small muted">상관은 동시 변동을 의미하며 인과관계를 뜻하지 않음. 유의성은 Holm 보정 p 기준(* &lt;0.05, ** &lt;0.01, *** &lt;0.001).</p>'+aiBox('correlation'));
+
+// 5. 요일
+var W=S.weekday;
+var wb=W.available?'<div class="kv"><div>평일 평균<b>'+fmt(W.weekday_mean)+'건</b></div><div>주말 평균<b>'+fmt(W.weekend_mean)+'건</b></div><div>Mann-Whitney p<b>'+pf(W.p)+star(W.p)+'</b></div><div>효과크기 r<b>'+fmt(W.effect_r,3)+'</b></div></div><p class="small muted">U = '+fmt(W.u,1)+', Z = '+fmt(W.z,3)+' · 7요일 Kruskal-Wallis H = '+fmt(W.kruskal_h,2)+' (p '+pf(W.kruskal_p)+')</p><div class="chart-box"><canvas id="cWeekday"></canvas></div>':'<p class="muted">일수가 부족해 산출하지 않음.</p>';
+h+=chap('c-wd','요일 효과',wb+aiBox('weekday'));
+
+// 6. 주제별 확산력
+var T=S.topic_spread;
+var tt='<div class="table-wrap"><table><thead><tr><th>주제</th><th class="num">이슈 수</th><th class="num">이슈당 평균 매체</th><th class="num">중앙값</th><th class="num">대형 확산 이슈</th><th>검정 포함</th></tr></thead><tbody>'+T.topics.map(function(x){return '<tr><td>'+esc(x.topic)+'</td><td class="num">'+x.issues+'</td><td class="num">'+fmt(x.mean)+'</td><td class="num">'+fmt(x.median)+'</td><td class="num">'+x.big+'</td><td>'+(x.included?'포함':'<span class="muted">제외(이슈 '+T.min_issues+'개 미만)</span>')+'</td></tr>';}).join('')+'</tbody></table></div>';
+tt+=T.available?'<p>Kruskal-Wallis H = '+fmt(T.h)+' (자유도 '+(T.k-1)+'), p '+pf(T.p)+star(T.p)+', ε² = '+fmt(T.epsilon2,3)+'</p><div class="chart-box"><canvas id="cTopic"></canvas></div>':'<p class="muted">이슈 20개 이상인 주제가 2개 미만이라 검정하지 않음.</p>';
+h+=chap('c-ts','주제별 확산력',tt+aiBox('topic_spread'));
+
+// 7. 주제 구성
+var TM=S.topic_month;
+var tm=TM.available?'<p>카이제곱 χ² = '+fmt(TM.chi2,1)+' (자유도 '+TM.dof+'), p '+pf(TM.p)+star(TM.p)+', Cramér\'s V = '+fmt(TM.cramers_v,3)+'</p><h3>월별 주제 비중 (%)</h3><div class="table-wrap" id="heatTM"></div>':'<p class="muted">표본 부족으로 산출하지 않음.</p>';
+h+=chap('c-tm','주제 구성 변화 (주제 × 월)',tm+aiBox('topic_month'));
+
+// 8. 홍보비
+var B=S.budget;
+var bb;
+if(!B.available)bb='<div class="note">홍보비 자료(<code>data/budget.csv</code>, 열: month, amount)가 없어 분석하지 않음. 파일을 추가하면 월별 홍보비와 보도량의 상관, 보도 1건당 홍보비가 자동 산출됨.</div>';
+else{bb='<div class="kv"><div>분석 개월 수<b>'+B.n+'개월</b></div><div>홍보비 합계<b>'+fmt(B.total_amount,0)+'원</b></div><div>보도 1건당 홍보비<b>'+fmt(B.cost_per_article,0)+'원</b></div><div>Pearson r<b>'+(B.r==null?'-':fmt(B.r,3)+' (p '+pf(B.p)+')')+'</b></div></div>';
+  if(B.small_sample)bb+='<div class="note" style="margin-top:8px">⚠ 표본이 '+B.n+'개월로 적어(12개월 미만) 홍보비와 보도량의 관계에 대한 결론을 유보함.</div>';
+  bb+='<div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>월</th><th class="num">홍보비(원)</th><th class="num">보도 건수</th><th class="num">1건당 홍보비(원)</th></tr></thead><tbody>'+B.months.map(function(m){return '<tr><td>'+m.month+'</td><td class="num">'+fmt(m.amount,0)+'</td><td class="num">'+fmt(m.articles,0)+'</td><td class="num">'+fmt(m.per_article,0)+'</td></tr>';}).join('')+'</tbody></table></div>';}
+h+=chap('c-budget','홍보비 연계 분석',bb+aiBox('budget'));
+
+// 9. 제언·한계·방법
+var rc='';
+if(AI&&AI.recommendations&&AI.recommendations.length)rc+='<h3>제언 (AI 해석)</h3><ul class="tight">'+AI.recommendations.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
+rc+='<h3>데이터 한계</h3><ul class="tight">'+S.limitations.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+(AI&&AI.caveats?AI.caveats.map(function(x){return '<li>'+esc(x)+' <span class="badge">AI</span></li>';}).join(''):'')+'</ul>';
+rc+='<h3>분석 방법</h3><ul class="tight small"><li>수집: 네이버 API HUB 뉴스 검색(검색어별 최대 1,000건), 뉴스토어 API(선택), 빅카인즈 엑셀(선택). 제외어 제거 후 지역명·지역어로 관련성 판단</li><li>이슈 통합: 제목 정규화 → 문자 2-gram 자카드 유사도 ≥ 0.45, 3일 이내, 이슈 최대 기간 7일(union-find)</li><li>통계: scipy — 선형회귀, Pearson(95% CI: Fisher z)·Spearman, Holm 다중비교 보정, Mann-Whitney U(r = |Z|/√N), Kruskal-Wallis(ε²), 카이제곱(Cramér\'s V)</li><li>AI 해석: Gemini에 통계 결과 JSON만 전달하고 새 수치 생성을 금지함. 해석은 참고용이며 판단 기준은 통계 수치임</li></ul>';
+h+=chap('c-rec','제언 · 데이터 한계 · 분석 방법',rc);
+
+root.innerHTML=h;
+document.getElementById('toc').innerHTML=chaps.map(function(c,i){return '<a href="#'+c[0]+'">'+(i+1)+'. '+c[1]+'</a>';}).join('');
+
+// ── 히트맵 ──
+function heat(el,rows,cols,vals,mode,dg){
+  var t='<table class="heat"><thead><tr><th></th>'+cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+  var max=0;vals.forEach(function(r){r.forEach(function(v){if(v!=null&&Math.abs(v)>max)max=Math.abs(v);});});
+  rows.forEach(function(r,i){t+='<tr><th>'+esc(r)+'</th>'+vals[i].map(function(v){
+    if(v==null)return '<td>-</td>';var a,bg;
+    if(mode==='div'){a=Math.min(1,Math.abs(v));bg=v>=0?'rgba(29,79,156,'+a.toFixed(2)+')':'rgba(192,57,43,'+a.toFixed(2)+')';}
+    else{a=max?v/max:0;bg='rgba(232,137,26,'+(a*0.9).toFixed(2)+')';}
+    var col=a>0.55?'#fff':'inherit';
+    return '<td style="background:'+bg+';color:'+col+'">'+(mode==='div'?fmt(v,2):fmt(v*100,1))+'</td>';}).join('')+'</tr>';});
+  document.getElementById(el).innerHTML=t+'</tbody></table>'+(mode==='div'?'<p class="small muted">파랑 = 양(+)의 상관, 빨강 = 음(−)의 상관, 진할수록 강함</p>':'<p class="small muted">각 월의 주제별 보도 비중. 진할수록 비중이 큼</p>');
+}
+heat('heatCorr',S.matrix.labels,S.matrix.labels,S.matrix.values,'div');
+if(TM.available)heat('heatTM',TM.topics,TM.months.map(function(m){return m.slice(2).replace('-','.');}),TM.shares,'seq');
+
+// ── 차트 ──
+if(typeof Chart==='undefined'){document.querySelectorAll('.chart-box').forEach(function(b){b.innerHTML='<p class="muted small">차트 라이브러리를 불러오지 못했습니다.</p>';});return;}
+var charts=[];
+function draw(){
+  charts.forEach(function(c){c.destroy();});charts=[];
+  var tx=css('--muted'),gr=css('--grid'),blue=css('--blue'),orange=css('--orange'),green=css('--green');
+  Chart.defaults.color=tx;
+  var base=function(o){o=o||{};return Object.assign({responsive:true,maintainAspectRatio:false,animation:false},o);};
+  var ax=function(t,zero){return {beginAtZero:zero!==false,grid:{color:gr},title:{display:!!t,text:t||''}};};
+  if(tr.available){
+    var lbl=tr.points.map(function(p){return p.week.slice(5).replace('-','/');});
+    charts.push(new Chart(document.getElementById('cTrend'),{data:{labels:lbl,datasets:[
+      {type:'bar',label:'주간 보도 건수',data:tr.points.map(function(p){return p.y;}),backgroundColor:blue,borderRadius:3,order:2},
+      {type:'line',label:'회귀선',data:tr.points.map(function(p,i){return tr.intercept+tr.slope*i;}),borderColor:orange,borderWidth:2,pointRadius:0,order:1}]},
+      options:base({scales:{x:{grid:{color:gr},ticks:{maxRotation:0,autoSkip:true}},y:ax('건')}})}));
+  }
+  var scatter=function(i){
+    var c=C.items[i],pts=c.points.map(function(p){return {x:p[0],y:p[1]};});
+    var xs=pts.map(function(p){return p.x;}),ys=pts.map(function(p){return p.y;}),nn=pts.length,mx=0,my=0;
+    xs.forEach(function(v){mx+=v/nn;});ys.forEach(function(v){my+=v/nn;});
+    var sxy=0,sxx=0;for(var k=0;k<nn;k++){sxy+=(xs[k]-mx)*(ys[k]-my);sxx+=(xs[k]-mx)*(xs[k]-mx);}
+    var b=sxx?sxy/sxx:0,a=my-b*mx,x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs);
+    return new Chart(document.getElementById('cScatter'),{type:'scatter',data:{datasets:[
+      {label:'주',data:pts,backgroundColor:blue},
+      {type:'line',label:'회귀선',data:[{x:x0,y:a+b*x0},{x:x1,y:a+b*x1}],borderColor:orange,borderWidth:2,pointRadius:0}]},
+      options:base({plugins:{legend:{display:false}},scales:{x:Object.assign(ax(c.label),{type:'linear'}),y:ax('주간 보도 건수')}})});
+  };
+  var sel=document.getElementById('scSel'),sc=scatter(+sel.value||0);charts.push(sc);
+  sel.onchange=function(){sc.destroy();charts.splice(charts.indexOf(sc),1);sc=scatter(+sel.value);charts.push(sc);};
+  if(W.available)charts.push(new Chart(document.getElementById('cWeekday'),{type:'bar',data:{labels:W.labels,datasets:[{label:'일 평균 보도',data:W.means,backgroundColor:W.labels.map(function(l,i){return i>=5?orange:blue;}),borderRadius:3}]},options:base({plugins:{legend:{display:false}},scales:{x:{grid:{color:gr}},y:ax('건/일')}})}));
+  if(T.available){var tp=T.topics.filter(function(x){return x.included;});
+    charts.push(new Chart(document.getElementById('cTopic'),{type:'bar',data:{labels:tp.map(function(x){return x.topic;}),datasets:[{label:'이슈당 평균 매체 수',data:tp.map(function(x){return x.mean;}),backgroundColor:green,borderRadius:3}]},options:base({indexAxis:'y',plugins:{legend:{display:false}},scales:{x:ax('매체 수'),y:{grid:{color:gr}}}})}));}
+}
+draw();
+document.getElementById('themeBtn').onclick=function(){var t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t);draw();};
+})();
+</script>
+</body>
+</html>

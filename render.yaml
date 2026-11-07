@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: asan-news-dashboard
+    runtime: node
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: ADMIN_ID
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: 계정명/저장소명   # 본인 저장소로 바꾸세요
+      - key: SESSION_SECRET
+        generateValue: true

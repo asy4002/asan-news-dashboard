@@ -7,6 +7,8 @@
 - **성과 보고서** `/report.html` — 통계 분석 + AI 해석
 - **관리자 페이지** `/admin` — 로그인 후 [최신 데이터로 갱신] 버튼
 
+> 📘 처음부터 다시 설치·배포하려면 **[docs/실행절차.md](docs/실행절차.md)** 를 순서대로 따라 하세요.
+
 > ⚠️ API 키·비밀번호·토큰은 **절대** 코드, README, 커밋에 넣지 마세요. 로컬은 `.env`, GitHub Actions는 **Secrets**, Render는 **Environment**에 넣습니다.
 
 ---

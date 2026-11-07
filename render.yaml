@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: asan-news-dashboard
     runtime: node
@@ -16,6 +16,6 @@ services:
       - key: GITHUB_TOKEN
         sync: false
       - key: GITHUB_REPO
-        value: 계정명/저장소명   # 본인 저장소로 바꾸세요
+        value: 怨꾩젙紐???μ냼紐?  # 蹂몄씤 ??μ냼濡?諛붽씀?몄슂
       - key: SESSION_SECRET
         generateValue: true

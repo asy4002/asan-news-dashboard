@@ -64,7 +64,7 @@ render.yaml                  Render Blueprint
 | 키 | 발급처 | 비고 |
 |---|---|---|
 | `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` | **NAVER API HUB** (네이버 클라우드 플랫폼 콘솔 → API HUB → 검색 > 뉴스) | 기존 네이버 개발자센터 검색 API는 API HUB로 **이관**되었습니다. 엔드포인트 `https://naverapihub.apigw.ntruss.com/search/v1/news`, 헤더 `X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY` |
-| `NEWSTORE_API_KEY` | 한국언론진흥재단 뉴스토어(빅카인즈) | 선택. 엔드포인트가 다르면 `NEWSTORE_ENDPOINT` 환경변수로 지정 |
+| `NEWSTORE_API_KEY` | 한국언론진흥재단 [뉴스토어](https://www.newstore.or.kr) → 뉴스검색 API 구매·승인 후 발급 | 네이버 대신(또는 함께) 사용 가능. 엔드포인트 기본값 `https://www.newstore.or.kr/api-newstore/v1/search/newsAllList.json`, 다르면 Actions Variable `NEWSTORE_ENDPOINT` 로 지정 |
 | `GEMINI_API_KEY` | Google AI Studio | `GEMINI_TEXT_MODEL`(예: `gemini-2.5-flash`)도 함께 지정 |
 | `GITHUB_TOKEN` | GitHub → Settings → Developer settings → Fine-grained tokens | 이 저장소만, **Actions: Read and write** 권한 |
 

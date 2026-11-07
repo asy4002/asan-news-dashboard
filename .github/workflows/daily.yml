@@ -56,6 +56,7 @@ jobs:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           NEWSTORE_API_KEY: ${{ secrets.NEWSTORE_API_KEY }}
+          NEWSTORE_ENDPOINT: ${{ vars.NEWSTORE_ENDPOINT }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_TEXT_MODEL: ${{ vars.GEMINI_TEXT_MODEL || 'gemini-2.5-flash' }}
           PYTHONIOENCODING: utf-8

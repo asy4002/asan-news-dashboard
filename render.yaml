@@ -16,6 +16,6 @@
       - key: GITHUB_TOKEN
         sync: false
       - key: GITHUB_REPO
-        value: 怨꾩젙紐???μ냼紐?  # 蹂몄씤 ??μ냼濡?諛붽씀?몄슂
+        value: asy4002/asan-news-dashboard
       - key: SESSION_SECRET
         generateValue: true

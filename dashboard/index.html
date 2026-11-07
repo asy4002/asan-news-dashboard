@@ -410,7 +410,7 @@ function renderIssues(){
   $('tIssue').innerHTML=h+'</tbody>';
   pager('pIssue',issuePage,pages,function(p){issuePage=p;renderIssues();},issueRows.length+'개 이슈');
 }
-function link(a){var u=a[5];if(!/^https?:\/\//.test(u))return esc(a[4]);return '<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(a[4])+'</a>';}
+function link(a){var u=a[5];if(M.sample||/\.invalid\//.test(u))return esc(a[4])+' <span class="badge" title="샘플 데이터에는 원문 기사가 없습니다">원문 없음(샘플)</span>';if(!/^https?:\/\//.test(u))return esc(a[4])+' <span class="badge" title="매체가 원문 주소를 제공하지 않았습니다">원문 링크 없음</span>';return '<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(a[4])+'</a>';}
 $('tIssue').addEventListener('click',function(e){
   var th=e.target.closest('th.sort');if(th){var k=th.dataset.k;issueSort=issueSort.k===k?{k:k,dir:-issueSort.dir}:{k:k,dir:k==='title'||k==='topic'?1:-1};renderIssues();return;}
   if(e.target.closest('a'))return;
